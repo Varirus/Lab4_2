@@ -1,0 +1,70 @@
+﻿@page "/videogames/create"
+@using Microsoft.EntityFrameworkCore
+@using Lab4_2.Data
+@inject IDbContextFactory<Lab4_2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Create</PageTitle>
+
+<h1>Create</h1>
+
+<h2>VideoGame</h2>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <EditForm method="post" Model="VideoGame" OnValidSubmit="AddVideoGame" FormName="create" Enhance>
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" role="alert"/>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title:</label> 
+                <InputText id="title" @bind-Value="VideoGame.Title" class="form-control" /> 
+                <ValidationMessage For="() => VideoGame.Title" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="description" class="form-label">Description:</label> 
+                <InputText id="description" @bind-Value="VideoGame.Description" class="form-control" /> 
+                <ValidationMessage For="() => VideoGame.Description" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="rating" class="form-label">Rating:</label> 
+                <InputNumber id="rating" @bind-Value="VideoGame.Rating" class="form-control" /> 
+                <ValidationMessage For="() => VideoGame.Rating" class="text-danger" /> 
+            </div>            
+            <div class="mb-3">
+                <label for="genre" class="form-label">Genre:</label> 
+                <InputText id="genre" @bind-Value="VideoGame.Genre" class="form-control" /> 
+                <ValidationMessage For="() => VideoGame.Genre" class="text-danger" /> 
+            </div>        
+            <div class="mb-3">
+                <label for="relasedate" class="form-label">RelaseDate:</label> 
+                <InputDate id="relasedate" @bind-Value="VideoGame.RelaseDate" class="form-control" /> 
+                <ValidationMessage For="() => VideoGame.RelaseDate" class="text-danger" /> 
+            </div>    
+            <div class="mb-3">
+                <label for="imageurl" class="form-label">ImageUrl:</label>
+                <InputText id="imageurl" @bind-Value="VideoGame.ImageUrl" class="form-control" />
+                <ValidationMessage For="() => VideoGame.ImageUrl" class="text-danger" />
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+        </EditForm>
+    </div>
+</div>
+
+<div>
+    <a href="/videogames">Back to List</a>
+</div>
+
+@code {
+    [SupplyParameterFromForm]
+    private VideoGame VideoGame { get; set; } = new();
+
+    // To protect from overposting attacks, see https://learn.microsoft.com/aspnet/core/blazor/forms/#mitigate-overposting-attacks.
+    private async Task AddVideoGame()
+    {
+        using var context = DbFactory.CreateDbContext();
+        VideoGame.RatingsAmount = 1;
+        context.VideoGame.Add(VideoGame);
+        await context.SaveChangesAsync();
+        NavigationManager.NavigateTo("/videogames");
+    }
+}

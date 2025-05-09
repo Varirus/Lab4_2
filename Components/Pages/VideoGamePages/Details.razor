@@ -1,0 +1,128 @@
+﻿@page "/videogames/details"
+@rendermode @(new InteractiveServerRenderMode(false))
+@using Microsoft.EntityFrameworkCore
+@using Lab4_2.Data
+@using System.ComponentModel.DataAnnotations
+@inject IDbContextFactory<Lab4_2.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>Details</PageTitle>
+
+<h1>Details</h1>
+
+<div>
+    <h2>VideoGame</h2>
+    <hr />
+    @if (videogame is null)
+    {
+        <p><em>Loading...</em></p>
+    }
+    else {
+        <dl class="row">
+            <dt class="col-sm-2">Title</dt>
+            <dd class="col-sm-10">@videogame.Title</dd>
+            <dt class="col-sm-2">Description</dt>
+            <dd class="col-sm-10">@videogame.Description</dd>
+            <dt class="col-sm-2">Rating</dt>
+            <dd class="col-sm-10">@videogame.Rating</dd>
+            <dt class="col-sm-2">RatingsAmount</dt>
+            <dd class="col-sm-10">@videogame.RatingsAmount</dd>
+            <dt class="col-sm-2">Genre</dt>
+            <dd class="col-sm-10">@videogame.Genre</dd>
+            <dt class="col-sm-2">RelaseDate</dt>
+            <dd class="col-sm-10">@videogame.RelaseDate</dd>
+        </dl>
+        <div>
+            <AuthorizeView>
+                <Authorized>
+                    <a href="@($"/videogames/edit?id={videogame.Id}")">Edit</a> |
+                </Authorized>
+            </AuthorizeView>
+
+            <a href="@($"/videogames")">Back to List</a>
+        </div>
+
+        @if (videogame.ImageUrl is not null)
+        {
+            <p>
+                <img style=" max-height: 500px; max-width:500px;" src="@videogame.ImageUrl" />
+            </p>
+        }
+
+        <EditForm Model="@inputModel" OnValidSubmit="@addRating" FormName="RatingForm" style="max-width: 450px; margin-left:0px;">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="floatInput">Value (0-10):</label>
+                <InputNumber @bind-Value="inputModel.Value" id="floatInput" class="form-control"
+                Min="0" Max="10" Step="0.1" />
+                <ValidationMessage For="@(() => inputModel.Value)" />
+            </div>
+
+            <button class="btn btn-primary" type="submit">Add Rating</button>
+        </EditForm>
+    }
+</div>
+
+@code {
+    private VideoGame? videogame;
+
+    private InputModel inputModel = new InputModel();
+    public class InputModel
+    {
+        public float Value { get; set; }
+    }
+
+    [SupplyParameterFromQuery]
+    private int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        videogame = await context.VideoGame.FirstOrDefaultAsync(m => m.Id == Id);
+
+        if (videogame is null)
+        {
+            NavigationManager.NavigateTo("notfound");
+        }
+    }
+
+    private async Task addRating()
+    {
+        if (videogame == null) return;
+        videogame.Rating = (((videogame.Rating * videogame.RatingsAmount) + inputModel.Value) / (videogame.RatingsAmount + 1));
+        videogame.RatingsAmount++;
+        await UpdateVideoGame();
+    }
+
+    private async Task UpdateVideoGame()
+    {
+        using var context = DbFactory.CreateDbContext();
+        context.Attach(videogame!).State = EntityState.Modified;
+
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!VideoGameExists(videogame!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+
+        NavigationManager.NavigateTo("/videogames");
+    }
+
+    private bool VideoGameExists(int id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.VideoGame.Any(e => e.Id == id);
+    }
+}

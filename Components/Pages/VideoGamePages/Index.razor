@@ -1,0 +1,45 @@
+﻿@page "/videogames"
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Lab4_2.Data
+@rendermode @(new InteractiveServerRenderMode(false))
+@implements IAsyncDisposable
+@inject IDbContextFactory<Lab4_2.Data.ApplicationDbContext> DbFactory
+
+<PageTitle>Index</PageTitle>
+
+<h1>Index</h1>
+
+<p>
+    <a href="videogames/create">Create New</a>
+</p>
+
+<QuickGrid Class="table" Items="context.VideoGame">
+    <PropertyColumn Property="videogame => videogame.Title" Sortable="true"/>
+    <PropertyColumn Property="videogame => videogame.Description" Sortable="true" />
+    <PropertyColumn Property="videogame => MathF.Round((float)videogame.Rating, 1)" Title="Rating" Sortable="true" />
+    <PropertyColumn Property="videogame => videogame.Genre" Sortable="true" />
+    <PropertyColumn Property="videogame => videogame.RelaseDate" Sortable="true" />
+
+    <TemplateColumn Context="videogame">
+        <a href="@($"videogames/details?id={videogame.Id}")">Details</a>
+        <AuthorizeView>
+            <Authorized>
+            | <a href="@($"videogames/edit?id={videogame.Id}")">Edit</a> |
+            <a href="@($"videogames/delete?id={videogame.Id}")">Delete</a>
+            </Authorized>
+        </AuthorizeView>
+            
+    </TemplateColumn>
+</QuickGrid>
+
+@code {
+    private ApplicationDbContext context = default!;
+    
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

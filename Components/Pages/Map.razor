@@ -1,0 +1,17 @@
+﻿@page "/google-map"
+@inject IJSRuntime JS
+@rendermode InteractiveServer
+<div id="map" style="height: 500px; width: 100%;"></div>
+
+@code {
+    private IJSObjectReference? _module;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("initMap");
+        }
+    }
+
+}
